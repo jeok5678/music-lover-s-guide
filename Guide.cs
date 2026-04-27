@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 
+namespace MelomaniacGuide;
 public class Artist
 {
     public Guid Id { get; set; } = Guid.NewGuid();
