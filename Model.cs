@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
 
 namespace MelomaniacGuide;
+
 public class Artist
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -22,11 +26,6 @@ public class Disc
     public string Title { get; set; }
     public List<Guid> SongIds { get; set; } = new List<Guid>(); // Перелік пісень на диску
 }
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
 
 public class MusicDatabase
 {
