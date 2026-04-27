@@ -1,26 +1,95 @@
 using System;
+using System.Drawing;
 using System.Windows.Forms;
-// Якщо твої класи в файлі Guide.cs мають namespace MelomaniacGuide, переконайся, що він тут такий самий
 
 namespace MelomaniacGuide
 {
     public partial class Form1 : Form
     {
-        // Створюємо екземпляр нашої бази даних
+        // База даних
         private MusicDatabase db = new MusicDatabase();
+
+        // Оголошуємо елементи інтерфейсу
+        private ListBox listBoxArtists;
+        private TextBox txtArtistName;
+        private Button btnAddArtist;
+        private Button btnEditArtist;
+        private Button btnDeleteArtist;
+        private Label lblArtistTitle;
 
         public Form1()
         {
-            InitializeComponent();
+            // Викликаємо наш власний метод побудови інтерфейсу
+            InitializeCustomComponent();
+            
+            // Підписуємося на подію завантаження форми
+            this.Load += Form1_Load;
         }
 
-        // Ця подія спрацьовує при запуску програми
+        // --- ВІЗУАЛЬНА ЧАСТИНА (Заміна дизайнера) ---
+        private void InitializeCustomComponent()
+        {
+            // Налаштування самої форми
+            this.Text = "Довідник меломана - Керування виконавцями";
+            this.Size = new Size(450, 350);
+            this.StartPosition = FormStartPosition.CenterScreen;
+
+            // 1. Надпис (Label)
+            lblArtistTitle = new Label();
+            lblArtistTitle.Text = "Назва групи/виконавця:";
+            lblArtistTitle.Location = new Point(220, 15);
+            lblArtistTitle.Size = new Size(200, 20);
+
+            // 2. Поле вводу (TextBox)
+            txtArtistName = new TextBox();
+            txtArtistName.Location = new Point(220, 40);
+            txtArtistName.Size = new Size(180, 25);
+
+            // 3. Кнопка "Додати"
+            btnAddArtist = new Button();
+            btnAddArtist.Text = "Додати";
+            btnAddArtist.Location = new Point(220, 80);
+            btnAddArtist.Size = new Size(180, 35);
+            btnAddArtist.Click += btnAddArtist_Click; // Прив'язка події
+
+            // 4. Кнопка "Редагувати"
+            btnEditArtist = new Button();
+            btnEditArtist.Text = "Редагувати";
+            btnEditArtist.Location = new Point(220, 125);
+            btnEditArtist.Size = new Size(180, 35);
+            btnEditArtist.Click += btnEditArtist_Click;
+
+            // 5. Кнопка "Видалити"
+            btnDeleteArtist = new Button();
+            btnDeleteArtist.Text = "Видалити";
+            btnDeleteArtist.Location = new Point(220, 170);
+            btnDeleteArtist.Size = new Size(180, 35);
+            btnDeleteArtist.BackColor = Color.LightCoral; // Зробимо кнопку червоною для небезпечної дії
+            btnDeleteArtist.Click += btnDeleteArtist_Click;
+
+            // 6. Список (ListBox)
+            listBoxArtists = new ListBox();
+            listBoxArtists.Location = new Point(15, 15);
+            listBoxArtists.Size = new Size(190, 270);
+            listBoxArtists.SelectedIndexChanged += listBoxArtists_SelectedIndexChanged;
+
+            // Додаємо всі створені елементи на форму
+            this.Controls.Add(lblArtistTitle);
+            this.Controls.Add(txtArtistName);
+            this.Controls.Add(btnAddArtist);
+            this.Controls.Add(btnEditArtist);
+            this.Controls.Add(btnDeleteArtist);
+            this.Controls.Add(listBoxArtists);
+        }
+
+        // --- ЛОГІКА РОБОТИ ПРОГРАМИ ---
+
         private void Form1_Load(object sender, EventArgs e)
         {
             try
             {
-                db.LoadData(); // Завантажуємо дані з JSON
-                RefreshArtistsList(); // Оновлюємо візуальний список
+                db.LoadData(); 
+                RefreshArtistsList(); 
             }
             catch (Exception ex)
             {
@@ -28,18 +97,15 @@ namespace MelomaniacGuide
             }
         }
 
-        // Метод для оновлення списку виконавців на екрані (READ)
         private void RefreshArtistsList()
         {
-            listBoxArtists.DataSource = null; // Очищаємо прив'язку
-            listBoxArtists.DataSource = db.Artists; // Підключаємо наш список
-            listBoxArtists.DisplayMember = "Name"; // Вказуємо, що саме показувати (властивість Name)
+            listBoxArtists.DataSource = null; 
+            listBoxArtists.DataSource = db.Artists; 
+            listBoxArtists.DisplayMember = "Name"; 
         }
 
-        // Обробник кнопки "Додати" (CREATE)
         private void btnAddArtist_Click(object sender, EventArgs e)
         {
-            // Захист від пустих значень (щоб не падало)
             if (string.IsNullOrWhiteSpace(txtArtistName.Text))
             {
                 MessageBox.Show("Введіть назву виконавця!", "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -49,15 +115,13 @@ namespace MelomaniacGuide
             var newArtist = new Artist { Name = txtArtistName.Text.Trim() };
             db.Artists.Add(newArtist);
             
-            db.SaveData(); // Зберігаємо у файл
-            RefreshArtistsList(); // Оновлюємо екран
-            txtArtistName.Clear(); // Очищаємо поле вводу
+            db.SaveData(); 
+            RefreshArtistsList(); 
+            txtArtistName.Clear(); 
         }
 
-        // Обробник кнопки "Редагувати" (UPDATE)
         private void btnEditArtist_Click(object sender, EventArgs e)
         {
-            // Перевіряємо, чи вибрано когось у списку
             if (listBoxArtists.SelectedItem is Artist selectedArtist)
             {
                 if (string.IsNullOrWhiteSpace(txtArtistName.Text))
@@ -66,8 +130,7 @@ namespace MelomaniacGuide
                     return;
                 }
 
-                selectedArtist.Name = txtArtistName.Text.Trim(); // Змінюємо ім'я
-                
+                selectedArtist.Name = txtArtistName.Text.Trim(); 
                 db.SaveData();
                 RefreshArtistsList();
                 txtArtistName.Clear();
@@ -78,19 +141,15 @@ namespace MelomaniacGuide
             }
         }
 
-        // Обробник кнопки "Видалити" (DELETE)
         private void btnDeleteArtist_Click(object sender, EventArgs e)
         {
             if (listBoxArtists.SelectedItem is Artist selectedArtist)
             {
-                // Підтвердження дії від користувача
                 var result = MessageBox.Show($"Ви впевнені, що хочете видалити {selectedArtist.Name}?", "Підтвердження", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 
                 if (result == DialogResult.Yes)
                 {
-                    // Видаляємо всі пісні цього виконавця (щоб не було "мертвих" даних)
                     db.Songs.RemoveAll(s => s.ArtistId == selectedArtist.Id);
-                    
                     db.Artists.Remove(selectedArtist);
                     
                     db.SaveData();
@@ -103,7 +162,6 @@ namespace MelomaniacGuide
             }
         }
 
-        // Щоб при кліку на список ім'я з'являлося в текстовому полі для зручного редагування
         private void listBoxArtists_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (listBoxArtists.SelectedItem is Artist selectedArtist)
