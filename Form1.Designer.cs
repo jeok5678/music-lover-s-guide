@@ -383,9 +383,7 @@
             clbDiscSongs.Name = "clbDiscSongs";
             clbDiscSongs.Size = new Size(360, 112);
             clbDiscSongs.TabIndex = 4;
-            clbDiscSongs.Click += listBoxDiscs_SelectedIndexChanged;
-            clbDiscSongs.SelectedIndexChanged += listBoxDiscs_SelectedIndexChanged;
-            // 
+           // 
             // listBoxDiscs
             // 
             listBoxDiscs.FormattingEnabled = true;

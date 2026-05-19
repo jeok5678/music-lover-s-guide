@@ -14,7 +14,15 @@ namespace MusicGuide
         {
             InitializeComponent();
             _controller = new MusicController();
+
+            // 1. Спочатку завантажуємо початкові списки
             UpdateList();
+
+            // 2. ПРИМУСОВО прив'язуємо подію до правильного контролера прямо в коді!
+            listBoxDiscs.SelectedIndexChanged += listBoxDiscs_SelectedIndexChanged;
+
+            // 3. Одразу синхронізуємо дані для першого альбому в списку
+            SyncDiscDetails();
         }
 
         private void UpdateList()
@@ -115,25 +123,6 @@ namespace MusicGuide
             }
         }
 
-        private void btnEditDisc_Click(object sender, EventArgs e)
-        {
-            if (listBoxDiscs.SelectedItem is Disc selected &&
-                !string.IsNullOrWhiteSpace(txtDiscTitle.Text) &&
-                int.TryParse(txtDiscYear.Text, out int year))
-            {
-                int currentIndex = listBoxDiscs.SelectedIndex;
-
-                var songIds = GetCheckedSongIds();
-                _controller.EditDisc(selected, txtDiscTitle.Text.Trim(), year, songIds);
-
-                UpdateList();
-
-                if (currentIndex >= 0 && currentIndex < listBoxDiscs.Items.Count)
-                {
-                    listBoxDiscs.SelectedIndex = currentIndex;
-                }
-            }
-        }
 
         private void btnDeleteDisc_Click(object sender, EventArgs e)
         {
@@ -154,12 +143,10 @@ namespace MusicGuide
             }
             return songIds;
         }
+        // --- UI логіка для альбомів ---
 
-        // --- UI логіка ---
-        private void listBoxDiscs_SelectedIndexChanged(object sender, EventArgs e)
+        private void SyncDiscDetails()
         {
-            if (listBoxDiscs.SelectedIndex == -1) return;
-
             if (listBoxDiscs.SelectedItem is Disc selected)
             {
                 txtDiscTitle.Text = selected.Title;
@@ -175,6 +162,54 @@ namespace MusicGuide
             }
         }
 
+        private void listBoxDiscs_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (listBoxDiscs.SelectedIndex == -1) return;
+            SyncDiscDetails();
+        }
+
+        private void RefreshDiscsList()
+        {
+            int currentIndex = listBoxDiscs.SelectedIndex;
+
+            // Тимчасово відписуємося, щоб уникнути зациклення при обнуленні DataSource
+            listBoxDiscs.SelectedIndexChanged -= listBoxDiscs_SelectedIndexChanged;
+
+            listBoxDiscs.DataSource = null;
+            listBoxDiscs.DataSource = _controller.GetDiscs().ToList();
+            listBoxDiscs.DisplayMember = "Title";
+
+            if (currentIndex >= 0 && currentIndex < listBoxDiscs.Items.Count)
+            {
+                listBoxDiscs.SelectedIndex = currentIndex;
+            }
+
+            // Підписуємося назад
+            listBoxDiscs.SelectedIndexChanged += listBoxDiscs_SelectedIndexChanged;
+
+            // Оновлюємо галочки для поточного альбому
+            SyncDiscDetails();
+        }
+
+        // --- Обробник кнопки Редагувати ---
+        private void btnEditDisc_Click(object sender, EventArgs e)
+        {
+            if (listBoxDiscs.SelectedItem is Disc selected &&
+                !string.IsNullOrWhiteSpace(txtDiscTitle.Text) &&
+                int.TryParse(txtDiscYear.Text, out int year))
+            {
+                var songIds = GetCheckedSongIds();
+
+                // Тепер сюди точно заходить і зберігає в data.json!
+                _controller.EditDisc(selected, txtDiscTitle.Text.Trim(), year, songIds);
+
+                RefreshDiscsList();
+            }
+            else
+            {
+                MessageBox.Show("Перевірте, чи вибрано альбом та чи правильно вказано рік!", "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
 
         {
